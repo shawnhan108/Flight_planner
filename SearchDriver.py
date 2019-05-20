@@ -47,7 +47,7 @@ class FlightSearch:
         year_now = datetime.datetime.now().year
         click_num = (year - year_now) * 12 + (month - month_now)
         for i in range(0, click_num):
-            time.sleep(0.5)
+            time.sleep(1.5)
             next_field = driver.find_element_by_xpath('//*[@id="ui-datepicker-div"]/a[2]')
             next_field.click()
 
@@ -99,7 +99,7 @@ class FlightSearch:
         year_now = datetime.datetime.now().year
         click_num = (year_from - year_now) * 12 + (month_from - month_now)
         for i in range(0, click_num):
-            time.sleep(0.5)
+            time.sleep(1.5)
             next_field = driver.find_element_by_xpath('//*[@id="ui-datepicker-div"]/a[2]')
             next_field.click()
 
@@ -120,7 +120,7 @@ class FlightSearch:
         # find the correct table for return (month + year)
         click_more = (year_back - year_from) * 12 + (month_back - month_from)
         for i in range(0, click_more):
-            time.sleep(0.5)
+            time.sleep(1.5)
             next_field = driver.find_element_by_xpath('//*[@id="ui-datepicker-div"]/a[2]')
             next_field.click()
 
@@ -160,3 +160,86 @@ class FlightSearch:
         search_field.click()
 
         return driver
+
+    def extract_info_oneway(self, driver):
+        time.sleep(5)
+        # extract flight price
+        all_prices = driver.find_elements_by_class_name('fare-details-section')
+        price_list = []
+        for price in all_prices:
+            price_list.append(price.text)
+
+        # extract flight time
+        all_itinerary_time = driver.find_elements_by_class_name('flight-row-head')
+        itinerary_time_list = []
+        for itinerary in all_itinerary_time:
+            temp = str(itinerary.text)
+            depart_time = temp[0:temp.find("\n")]
+
+            if temp[temp.find("arriving"):] != "":
+                duration = temp[6:-6]
+                dest_time = temp[-6:]
+            elif temp[temp.find("\n") + 1:temp.find("m") + 1] == "":
+                duration = temp[6:-6]
+                dest_time = temp[-6:]
+            else:
+                duration = temp[temp.find("\n") + 1:temp.find("m") + 1]
+                dest_time = temp[temp.find("m") + 3:]
+
+            itinerary_time_list.append([depart_time, duration, dest_time])
+
+        # extract flight locations
+        all_itinerary_location = driver.find_elements_by_class_name('top-section')
+        itinerary_locations_list = []
+        for itinerary in all_itinerary_location:
+            temp = str(itinerary.text)
+            depart = temp[0:temp.find("\n")]
+            dest = temp[temp.find("\n") + 1:]
+            if dest != dest[dest.find("\n") + 1:]:
+                connection = dest[dest.find("\n") + 1:]
+                dest = dest[0:dest.find("\n")]
+                itinerary_locations_list.append([depart, dest, connection])
+            else:
+                itinerary_locations_list.append([depart, dest])
+
+        # organize all information together.
+        flights = []
+        updated_price_list = []
+        for items in price_list:
+            if items[0] == "E":
+                substring = [items[items.find("$") + 1:items.find("\n.")]]
+                updated_price_list.append(substring)
+            else:
+                substring = items[items.find("$") + 1:items.find("\n.")]
+                updated_price_list[-1].append(substring)
+
+        for i in range(0, len(all_itinerary_location)):
+            temp = [itinerary_locations_list[i], itinerary_time_list[i], updated_price_list[i]]
+            flights.append(temp)
+
+        return flights
+
+    def extract_info_roundtrip(self, driver):
+
+        one_way_flights = FlightSearch.extract_info_oneway(self, driver)
+        time.sleep(5)
+
+        # go to the next page
+        next_xpath = '//*[@id="cabinBtnECO00"]'
+        turn_page_xpath = \
+            '//*[@id="main-fare-element-container"]/div/div/div[1]/fare-family-element/div[3]/div[1]/button'
+        # //*[@id="main-fare-element-container"]/div/div/div[2]/fare-family-element/div[3]/div[1]/button
+        STAR_XPATH = '//*[@id="fareSubContent_0"]/ul/li[3]/span[1]'
+        element = driver.find_element_by_xpath(next_xpath)
+        element.click()
+        wait = WebDriverWait(driver, 20)
+        element = wait.until(EC.element_to_be_clickable((By.XPATH, STAR_XPATH)))
+        element = driver.find_element_by_xpath(turn_page_xpath)
+        element.click()
+
+        # now extract the return flight info.
+        return_flights = FlightSearch.extract_info_oneway(self, driver)
+
+        return_list = [one_way_flights, return_flights]
+        print(return_list)
+        return return_list
