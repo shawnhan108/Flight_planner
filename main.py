@@ -19,5 +19,3 @@ def retrieve_roundtrip(depart, dest, depart_day, depart_month, depart_year, dest
     result = p.extract_info_roundtrip(driver)
     driver.quit()
     return result
-
-print(retrieve_roundtrip('YYC', 'YVR',8,8,2019,9,10,2019))

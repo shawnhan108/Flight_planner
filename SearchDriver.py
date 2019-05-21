@@ -1,6 +1,7 @@
 import time
 import datetime
 from selenium import webdriver
+from selenium.common.exceptions import ElementNotVisibleException, NoSuchElementException, TimeoutException
 from selenium.webdriver.common import action_chains, keys
 from selenium.webdriver.common.by import By  # allow searching for things using specific parameters
 from selenium.webdriver.support import expected_conditions as EC
@@ -47,9 +48,11 @@ class FlightSearch:
         year_now = datetime.datetime.now().year
         click_num = (year - year_now) * 12 + (month - month_now)
         for i in range(0, click_num):
-            time.sleep(1.5)
-            next_field = driver.find_element_by_xpath('//*[@id="ui-datepicker-div"]/a[2]')
-            next_field.click()
+            BUTTON_XPATH = '//*[@id="ui-datepicker-div"]/a[2]'
+            wait = WebDriverWait(driver, 20)
+            element = wait.until(EC.element_to_be_clickable((By.XPATH, BUTTON_XPATH)))
+            element = driver.find_element_by_xpath(BUTTON_XPATH)
+            element.click()
 
         # select the correct date
         if (day < 10):
@@ -99,43 +102,54 @@ class FlightSearch:
         year_now = datetime.datetime.now().year
         click_num = (year_from - year_now) * 12 + (month_from - month_now)
         for i in range(0, click_num):
-            time.sleep(1.5)
-            next_field = driver.find_element_by_xpath('//*[@id="ui-datepicker-div"]/a[2]')
-            next_field.click()
+            BUTTON_XPATH = '//*[@id="ui-datepicker-div"]/a[2]'
+            wait = WebDriverWait(driver, 20)
+            element = wait.until(EC.element_to_be_clickable((By.XPATH, BUTTON_XPATH)))
+            element = driver.find_element_by_xpath(BUTTON_XPATH)
+            element.click()
 
         # select the correct date
         if (day_from < 10):
             day_from = '0' + str(day_from)
 
+        time.sleep(1.5)
         date_button_xpath = (
             '//td[@data-handler="selectDay"][@data-date="{0}"][@data-month="{1}"][@data-year="{2}"]/span[1]'
         ).format(str(day_from), str(month_from - 1), str(year_from))
         general_button = '//*[@id="ui-datepicker-div"]/a[2]/span'
         wait = WebDriverWait(driver, 20)
-        element = wait.until(EC.element_to_be_clickable((By.XPATH, general_button)))
-        button = driver.find_element_by_xpath(date_button_xpath)
-        action_chains.ActionChains(driver).move_to_element(button).click().perform()
-        button.click()
+        element = wait.until(EC.element_to_be_clickable((By.XPATH, date_button_xpath)))
+        # button2 = driver.find_element_by_xpath(date_button_xpath)
+        # action_chains.ActionChains(driver).move_to_element(button).click().perform()
+        # button2.click()
+        element = driver.find_element_by_xpath(date_button_xpath)
+        webdriver.ActionChains(driver).move_to_element(element).click(element).perform()
 
         # find the correct table for return (month + year)
         click_more = (year_back - year_from) * 12 + (month_back - month_from)
         for i in range(0, click_more):
-            time.sleep(1.5)
-            next_field = driver.find_element_by_xpath('//*[@id="ui-datepicker-div"]/a[2]')
-            next_field.click()
+            BUTTON_XPATH = '//*[@id="ui-datepicker-div"]/a[2]'
+            wait = WebDriverWait(driver, 20)
+            element = wait.until(EC.element_to_be_clickable((By.XPATH, BUTTON_XPATH)))
+            element = driver.find_element_by_xpath(BUTTON_XPATH)
+            element.click()
 
         # select the correct date
         if (day_back < 10):
             day_back = '0' + str(day_back)
 
+        time.sleep(1.5)
         date_button_xpath = (
             '//td[@data-handler="selectDay"][@data-date="{0}"][@data-month="{1}"][@data-year="{2}"]/span[1]'
         ).format(str(day_back), str(month_back - 1), str(year_back))
         general_button = '//*[@id="ui-datepicker-div"]/a[2]/span'
         wait = WebDriverWait(driver, 20)
-        element = wait.until(EC.element_to_be_clickable((By.XPATH, general_button)))
-        button = driver.find_element_by_xpath(date_button_xpath)
-        action_chains.ActionChains(driver).move_to_element(button).click().perform()
+        element = wait.until(EC.element_to_be_clickable((By.XPATH, date_button_xpath)))
+        # button2 = driver.find_element_by_xpath(date_button_xpath)
+        # action_chains.ActionChains(driver).move_to_element(button).click().perform()
+        # button2.click()
+        element = driver.find_element_by_xpath(date_button_xpath)
+        webdriver.ActionChains(driver).move_to_element(element).click(element).perform()
 
         # Confirm the date by clicking the red "select" button
         date_select_xpath = '//*[@id="calendarSelectActionBtn"]'
@@ -178,10 +192,10 @@ class FlightSearch:
 
             if temp[temp.find("arriving"):] != "":
                 duration = temp[6:-6]
-                dest_time = temp[-6:]
+                dest_time = temp[-5:]
             elif temp[temp.find("\n") + 1:temp.find("m") + 1] == "":
                 duration = temp[6:-6]
-                dest_time = temp[-6:]
+                dest_time = temp[-5:]
             else:
                 duration = temp[temp.find("\n") + 1:temp.find("m") + 1]
                 dest_time = temp[temp.find("m") + 3:]
@@ -207,11 +221,19 @@ class FlightSearch:
         updated_price_list = []
         for items in price_list:
             if items[0] == "E":
-                substring = [items[items.find("$") + 1:items.find("\n.")]]
-                updated_price_list.append(substring)
-            else:
+                if len(updated_price_list) == 0 or len(updated_price_list[-1]) == 2:
+                    substring = [items[items.find("$") + 1:items.find("\n.")]]
+                    updated_price_list.append(substring)
+                else:
+                    updated_price_list[-1].append('NULL')
+                    substring = [items[items.find("$") + 1:items.find("\n.")]]
+                    updated_price_list.append(substring)
+            elif len(updated_price_list[-1]) == 1:
                 substring = items[items.find("$") + 1:items.find("\n.")]
                 updated_price_list[-1].append(substring)
+            else:
+                substring = ['NULL', items[items.find("$") + 1:items.find("\n.")]]
+                updated_price_list.append(substring)
 
         for i in range(0, len(all_itinerary_location)):
             temp = [itinerary_locations_list[i], itinerary_time_list[i], updated_price_list[i]]
@@ -224,22 +246,51 @@ class FlightSearch:
         one_way_flights = FlightSearch.extract_info_oneway(self, driver)
         time.sleep(5)
 
-        # go to the next page
         next_xpath = '//*[@id="cabinBtnECO00"]'
         turn_page_xpath = \
             '//*[@id="main-fare-element-container"]/div/div/div[1]/fare-family-element/div[3]/div[1]/button'
-        # //*[@id="main-fare-element-container"]/div/div/div[2]/fare-family-element/div[3]/div[1]/button
+        second_turn_page_xpath = \
+            '//*[@id="main-fare-element-container"]/div/div/div[2]/fare-family-element/div[3]/div[1]/button'
         STAR_XPATH = '//*[@id="fareSubContent_0"]/ul/li[3]/span[1]'
         element = driver.find_element_by_xpath(next_xpath)
         element.click()
-        wait = WebDriverWait(driver, 20)
-        element = wait.until(EC.element_to_be_clickable((By.XPATH, STAR_XPATH)))
-        element = driver.find_element_by_xpath(turn_page_xpath)
-        element.click()
+
+        # go to the next page
+        try:
+            wait = WebDriverWait(driver, 20)
+            element = wait.until(EC.element_to_be_clickable((By.XPATH, STAR_XPATH)))
+            element = driver.find_element_by_xpath(turn_page_xpath)
+            element.click()
+
+            try:
+                accept_xpath = '//*[@id="ulccLightBoxBody"]/div[2]/div[2]/div[1]/button'
+                wait = WebDriverWait(driver, 20)
+                element = wait.until(EC.element_to_be_clickable((By.XPATH, accept_xpath)))
+                element = driver.find_element_by_xpath(accept_xpath)
+                element.click()
+            except ElementNotVisibleException as e:
+                pass
+
+        except NoSuchElementException as es:
+            wait = WebDriverWait(driver, 20)
+            element = wait.until(EC.element_to_be_clickable((By.XPATH, STAR_XPATH)))
+            element = driver.find_element_by_xpath(second_turn_page_xpath)
+            element.click()
+
+            try:
+                accept_xpath = '//*[@id="ulccLightBoxBody"]/div[2]/div[2]/div[1]/button'
+                wait = WebDriverWait(driver, 20)
+                element = wait.until(EC.element_to_be_clickable((By.XPATH, accept_xpath)))
+                element = driver.find_element_by_xpath(accept_xpath)
+                element.click()
+            except ElementNotVisibleException as e:
+                pass
+            except TimeoutException as ex:
+                pass
 
         # now extract the return flight info.
+        time.sleep(5)
         return_flights = FlightSearch.extract_info_oneway(self, driver)
 
         return_list = [one_way_flights, return_flights]
-        print(return_list)
         return return_list
