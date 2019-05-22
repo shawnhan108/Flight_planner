@@ -1,4 +1,5 @@
 import SearchDriver
+import mysql.connector
 
 
 # depart and dest are strings, rest are integers. year = 4 digits, day/month 1 or 2 digits
