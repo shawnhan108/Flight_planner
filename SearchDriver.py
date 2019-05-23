@@ -1,5 +1,6 @@
-import time
 import datetime
+import time
+
 from selenium import webdriver
 from selenium.common.exceptions import ElementNotVisibleException, NoSuchElementException, TimeoutException
 from selenium.webdriver.common import action_chains, keys
@@ -58,6 +59,7 @@ class FlightSearch:
         if (day < 10):
             day = '0' + str(day)
 
+        time.sleep(1.5)
         date_button_xpath = (
             '//td[@data-handler="selectDay"][@data-date="{0}"][@data-month="{1}"][@data-year="{2}"]/span[1]'
         ).format(day, str(month - 1), str(year))
@@ -66,7 +68,6 @@ class FlightSearch:
         element = wait.until(EC.element_to_be_clickable((By.XPATH, general_button)))
         button = driver.find_element_by_xpath(date_button_xpath)
         action_chains.ActionChains(driver).move_to_element(button).click().perform()
-        button.click()
 
         # to edit depart, dest fields
         empty_field = driver.find_element_by_xpath(empty_xpath)
@@ -294,3 +295,23 @@ class FlightSearch:
 
         return_list = [one_way_flights, return_flights]
         return return_list
+
+
+# depart and dest are strings, rest are integers. year = 4 digits, day/month 1 or 2 digits
+def retrieve_oneway(depart, dest, day, month, year):
+    p = FlightSearch()
+    driver = p.set_up("https://www.aircanada.com/ca/en/aco/home.html")
+    driver = p.oneway_search(driver, depart, dest, day, month, year)
+    result = p.extract_info_oneway(driver)
+    driver.quit()
+    return result
+
+
+def retrieve_roundtrip(depart, dest, depart_day, depart_month, depart_year, dest_day, dest_month, dest_year):
+    p = FlightSearch()
+    driver = p.set_up("https://www.aircanada.com/ca/en/aco/home.html")
+    driver = p.round_trip_search(driver, depart, dest, depart_day, depart_month, depart_year, dest_day, dest_month,
+                                 dest_year)
+    result = p.extract_info_roundtrip(driver)
+    driver.quit()
+    return result
