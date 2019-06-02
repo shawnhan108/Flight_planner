@@ -43,8 +43,8 @@ class Flight_oneway:
         my_cursor = mydb.cursor()
 
         # general_info columns: Username, track_id, table_name, trip_type, depart, dest
-        push_command = 'INSERT INTO general_info VALUES ({0}, {1}, {2}, {3},{4},{5},{6}, {7}, {8}, {9}, {10}, {11}, ' \
-                       '{12}, {13}, {14}, {15},{16},{17},{18});' \
+        push_command = 'INSERT INTO general_info VALUES ("{0}", {1}, "{2}", "{3}","{4}","{5}",{6}, {7}, {8}, {9}, ' \
+                       '{10}, {11}, "{12}", "{13}", "{14}", "{15}", "{16}", "{17}", "{18}");' \
             .format(self.username, self.track_id, self.table_name, self.flight_type, self.depart, self.dest,
                     self.depart_date.split('/')[0], self.depart_date.split('/')[1], self.depart_date.split('/')[2],
                     -1, -1, -1,
@@ -53,6 +53,7 @@ class Flight_oneway:
                     self.notifications.trend
                     )
         my_cursor.execute(push_command)
+        mydb.commit()
 
         # setup a unique table for the flight, using table_name
         # table_name columns: Depart, Dest, Date, min_econ, min_bus, avg_econ, avg_bus, track_date
@@ -121,6 +122,11 @@ class Flight_oneway:
                 if filtered_lst:
                     self.notifications.notify_display(filtered_lst)
 
+        """
+        CODE FOR NOTIFICATION ALGORITHM HERE
+        """
+
+
     def store_info(self):
         def find_min(flight_info_list, class_type):
             if class_type == 'economy':
@@ -188,12 +194,13 @@ class Flight_oneway:
 
         # store flight_info into db.
         # table_name columns: Depart, Dest, Date, min_econ, min_bus, avg_econ, avg_bus, track_date
-        record = 'INSERT INTO {0} VALUES ({1}, {2}, {3}, {4}, {5}, {6}, {7}, {8});'.format(
+        record = 'INSERT INTO {0} VALUES ("{1}", "{2}", "{3}", {4}, {5}, {6}, {7}, "{8}");'.format(
             self.table_name, self.depart, self.dest, self.depart_date, find_min(flight_info, 'economy'),
             find_min(flight_info, 'business'), find_avg(flight_info, 'economy'), find_avg(flight_info, 'business'),
             str(datetime.datetime.now().strftime("%x")))
-
         my_cursor.execute(record)
+        mydb.commit()
+
         del flight_info
         my_cursor.close()
 
@@ -207,10 +214,30 @@ def reconstruct(track_id):
     )
     my_cursor = mydb.cursor()
 
-    find_flight_instance = 'SELECT * FROM general_info WHERE track_id={0}'.format(track_id)
+    find_flight_instance = 'SELECT * FROM general_info WHERE track_id="{0}"'.format(track_id)
     my_cursor.execute(find_flight_instance)
-
+    flight_record = my_cursor.fetchone()
     my_cursor.close()
+
+    new_notification = Notification()
+    new_notification.amount = flight_record[16]
+    new_notification.diff = flight_record[17]
+    new_notification.trend = flight_record[18]
+
+    new_filters = Filters()
+    new_filters.day_filter = flight_record[12]
+    new_filters.depart_time_filter = flight_record[13]
+    new_filters.max_duration_filter = flight_record[14]
+    new_filters.price_amount_filter = flight_record[15]
+
+    flight_obj = Flight_oneway(flight_record[0], flight_record[4], flight_record[5],
+                               str(flight_record[6]) + '/' + str(flight_record[7]) + '/' + str(flight_record[8]))
+    flight_obj.track_id = flight_record[1]
+    flight_obj.table_name = flight_record[2]
+    flight_obj.filters = new_filters
+    flight_obj.notifications = new_notification
+
+    return flight_obj
 
 
 class Filters:
