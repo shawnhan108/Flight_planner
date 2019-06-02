@@ -72,11 +72,15 @@ class FlightSearch:
         # to edit depart, dest fields
         empty_field = driver.find_element_by_xpath(empty_xpath)
         depart_field = driver.find_element_by_xpath(depart_xpath)
+        for i in range(0, 10):
+            depart_field.send_keys(keys.Keys.BACKSPACE)
         depart_field.send_keys(depart)
         time.sleep(1)
         depart_field.send_keys(keys.Keys.ENTER)
 
         dest_field = driver.find_element_by_xpath(dest_xpath)
+        for i in range(0, 10):
+            dest_field.send_keys(keys.Keys.BACKSPACE)
         dest_field.send_keys(dest)
         time.sleep(1)
         dest_field.send_keys(keys.Keys.ENTER)
@@ -161,13 +165,17 @@ class FlightSearch:
         # to edit depart, dest fields
         empty_field = driver.find_element_by_xpath(empty_xpath)
         depart_field = driver.find_element_by_xpath(depart_xpath)
-        depart_field.send_keys(depart)
         time.sleep(1)
+        for i in range(0, 10):
+            depart_field.send_keys(keys.Keys.BACKSPACE)
+        depart_field.send_keys(depart)
         depart_field.send_keys(keys.Keys.ENTER)
 
         dest_field = driver.find_element_by_xpath(dest_xpath)
         dest_field.send_keys(dest)
         time.sleep(1)
+        for i in range(0, 10):
+            dest_field.send_keys(keys.Keys.BACKSPACE)
         dest_field.send_keys(keys.Keys.ENTER)
 
         # Press search
