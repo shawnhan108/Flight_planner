@@ -1,9 +1,11 @@
 import airportcodes
 import searchAirport
 import SearchDriver
+import mysql.connector
 from datetime import datetime
 import time
 import datetime
+import Flights
 
 # print(airportcodes.giveCode("York Landing, MB"))
 
@@ -31,3 +33,15 @@ import datetime
 # [['Ottawa', 'Vancouver', 'YYC'], ['07:25', '1 Stop - 9hr15m', '13:40'], ['NULL', '1468']],
 # [['Ottawa', 'Vancouver', 'YYZ'], ['06:00', '1 Stop - 9hr17m', '12:17'], ['371', '2291']]]
 
+
+mydb = mysql.connector.connect(
+    host='localhost',
+    user='root',
+    passwd='flightplanner',
+    database='FP_database'
+)
+my_cursor = mydb.cursor()
+
+query = "INSERT INTO HELLO(greeting) " \
+            "VALUES(25)"
+my_cursor.execute(query)

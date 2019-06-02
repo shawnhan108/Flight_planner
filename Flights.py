@@ -2,7 +2,6 @@ import datetime
 from datetime import datetime
 
 import mysql.connector
-
 from SearchDriver import retrieve_oneway
 
 
@@ -21,7 +20,7 @@ class Flight_oneway:
         )
         my_cursor = mydb.cursor()
         self.username = username
-        self.track_id = 1 + my_cursor.execute('SELECT MAX(track_id) FROM User_info')
+        self.track_id = 1 + my_cursor.execute('SELECT MAX(track_id) FROM general_info')
         self.table_name = 'tb_' + str(self.track_id)
         self.depart = depart
         self.dest = dest
@@ -29,8 +28,12 @@ class Flight_oneway:
         self.filters = Filters()
         self.notifications = Notification()
 
-    # store an object information in table User_info
-    def push_info(self):
+        """
+        here add code for requiring user settings for filters and notifications.
+        """
+
+    # store an object information in table general_info
+    def setup_push_info(self):
         mydb = mysql.connector.connect(
             host='localhost',
             user='root',
@@ -39,9 +42,12 @@ class Flight_oneway:
         )
         my_cursor = mydb.cursor()
 
-        # User_info columns: Username, track_id, table_name, trip_type, depart, dest
-        push_command = 'INSERT INTO User_info VALUES ({0}, {1}, {2}, {3},{4},{5},{6}, {7}, {8}, {9}, {10}, {11}, {12});' \
+        # general_info columns: Username, track_id, table_name, trip_type, depart, dest
+        push_command = 'INSERT INTO general_info VALUES ({0}, {1}, {2}, {3},{4},{5},{6}, {7}, {8}, {9}, {10}, {11}, ' \
+                       '{12}, {13}, {14}, {15},{16},{17},{18});' \
             .format(self.username, self.track_id, self.table_name, self.flight_type, self.depart, self.dest,
+                    self.depart_date.split('/')[0], self.depart_date.split('/')[1], self.depart_date.split('/')[2],
+                    -1, -1, -1,
                     self.filters.day_filter, self.filters.depart_time_filter, self.filters.max_duration_filter,
                     self.filters.price_amount_filter, self.notifications.amount, self.notifications.diff,
                     self.notifications.trend
@@ -54,6 +60,7 @@ class Flight_oneway:
                          'min_econ int, min_bus int, avg_econ int, avg_bus int, track_date varchar(255);'.format \
             (self.table_name)
         my_cursor.execute(set_up_command)
+        my_cursor.close()
 
     def apply_filters(self, flight_info):
         if self.filters.day_filter_switch():
@@ -110,7 +117,7 @@ class Flight_oneway:
             else:
                 filtered_lst = list(
                     filter(lambda x: x[2][1] != 'NULL' and (
-                    int(x[2][1]) <= int(self.notifications.amount.split(';')[1]), flight_info)))
+                        int(x[2][1]) <= int(self.notifications.amount.split(';')[1]), flight_info)))
                 if filtered_lst:
                     self.notifications.notify_display(filtered_lst)
 
@@ -188,6 +195,22 @@ class Flight_oneway:
 
         my_cursor.execute(record)
         del flight_info
+        my_cursor.close()
+
+
+def reconstruct(track_id):
+    mydb = mysql.connector.connect(
+        host='localhost',
+        user='root',
+        passwd='flightplanner',
+        database='FP_database'
+    )
+    my_cursor = mydb.cursor()
+
+    find_flight_instance = 'SELECT * FROM general_info WHERE track_id={0}'.format(track_id)
+    my_cursor.execute(find_flight_instance)
+
+    my_cursor.close()
 
 
 class Filters:
