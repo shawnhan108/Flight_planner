@@ -58,7 +58,7 @@ class Flight_oneway:
         # setup a unique table for the flight, using table_name
         # table_name columns: Depart, Dest, Date, min_econ, min_bus, avg_econ, avg_bus, track_date
         set_up_command = 'CREATE TABLE {0} (Depart varchar(255), Dest varchar(255), Date varchar(255), ' \
-                         'min_econ int, min_bus int, avg_econ int, avg_bus int, track_date varchar(255);'.format \
+                         'min_econ int, min_bus int, avg_econ int, avg_bus int, track_date varchar(255));'.format \
             (self.table_name)
         my_cursor.execute(set_up_command)
         my_cursor.close()
