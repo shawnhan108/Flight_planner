@@ -53,7 +53,6 @@ class Flight_oneway:
                     self.notifications.trend
                     )
         my_cursor.execute(push_command)
-        mydb.commit()
 
         # setup a unique table for the flight, using table_name
         # table_name columns: Depart, Dest, Date, min_econ, min_bus, avg_econ, avg_bus, track_date
@@ -61,6 +60,7 @@ class Flight_oneway:
                          'min_econ int, min_bus int, avg_econ int, avg_bus int, track_date varchar(255));'.format \
             (self.table_name)
         my_cursor.execute(set_up_command)
+        mydb.commit()
         my_cursor.close()
 
     def apply_filters(self, flight_info):
@@ -122,10 +122,7 @@ class Flight_oneway:
                 if filtered_lst:
                     self.notifications.notify_display(filtered_lst)
 
-        """
-        CODE FOR NOTIFICATION ALGORITHM HERE
-        """
-
+    #  TODO: Notification Algos
 
     def store_info(self):
         def find_min(flight_info_list, class_type):
@@ -292,9 +289,9 @@ class Filters:
 class Notification:
 
     def __init__(self):
-        self.amount = ''
-        self.diff = 10000000
-        self.trend = 10000000
+        self.amount = []
+        self.diff = []
+        self.trend = []
 
     def amount_notify(self):
         if not self.amount:
@@ -316,15 +313,28 @@ class Notification:
 
     # limit must be a positive integer; class_type (string) is either 'Economy' or 'Business'
     # e.g. 'Economy;500'
-    def insert_amount(self, class_type, limit):
-        self.amount = str(class_type) + ';' + str(limit)
+    def insert_amount(self, class_type: str, limit_min: int, limit_max: int):
+        self.amount = [class_type, limit_min, limit_max]
 
-    # direction must be either 'inc' or 'dec'
-    def insert_diff(self, class_type, limit, direction):
-        self.diff = str(class_type) + ';' + str(limit) + ';' + str(direction)
+    def insert_diff(self, class_type: str, diff: int):
+        """
+        :param class_type: economy or business
+        :param diff: positive or negative
+        :return:
+        """
+        self.diff = [class_type, diff]
+        #  TODO: add class attribute class_type and get rid of the params in functions.
 
-    def insert_trend(self, class_type, limit, direction):
-        self.trend = str(class_type) + ';' + str(limit) + ';' + str(direction)
+    def insert_trend(self, class_type: str, days_since_reset: int, inc_num: int, direction: int):
+        """
+
+        :param class_type:
+        :param days_since_reset: total number of days since trend started being recorded
+        :param inc_num: number of price increase over days.
+        :param direction: +1 / -1
+        :return:
+        """
+        #  TODO: trend implementation.
 
     # display_lst contains flight info that satisfies user's request, now display to UI.
     def notify_display(self, display_lst):
