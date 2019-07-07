@@ -1,67 +1,65 @@
 import datetime
 from datetime import datetime
+from typing import Optional
 
 import mysql.connector
 from SearchDriver import retrieve_oneway
 
 
-class Flight_oneway:
-    flight_type = 'oneway'
-    track_counter = 0
+class Flight:
 
-    # Initializer with attributes
-    # all fields are strings, depart_date in the form of DD/MM/YYYY
-    def __init__(self, username, depart, dest, depart_date):
-        mydb = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            passwd='flightplanner',
-            database='FP_database'
-        )
-        my_cursor = mydb.cursor()
+    def __init__(self):
+        """
+        return a new, empty flight object.
+        """
+        # Connect to SQL DB
+        self.username = None
+        self.flight_id = 0
+        self.table_name = 'tb_' + str(self.flight_id)
+        self.info_dict = dict()
+        self.flight_type = None
+        self.depart = None
+        self.dest = None
+        self.depart_date = None
+        self.return_date = None
+        self.filters = None
+        self.notifications = None
+
+    # store an object information in table general_info
+    def __new_flight__(self, flight_id: int, username: str, depart: str, dest: str, depart_date: str, flight_type: str,
+                       return_date: Optional[str] = None):
+        """
+        Creates a basic flight instance, its table, and its dict.
+        :param flight_id:
+        :param username:
+        :param depart:
+        :param dest:
+        :param depart_date:
+        :param flight_type:
+        :param return_date:
+        :return:
+        COMMENT: need to increment flight_id by 1 in load_app
+        """
         self.username = username
-        self.track_id = 1 + my_cursor.execute('SELECT MAX(track_id) FROM general_info')
-        self.table_name = 'tb_' + str(self.track_id)
+        self.flight_id = flight_id
+        self.table_name = 'tb_' + str(flight_id)
+        self.flight_type = flight_type
         self.depart = depart
         self.dest = dest
         self.depart_date = depart_date
-        self.filters = Filters()
-        self.notifications = Notification()
+        self.return_date = return_date
 
-        """
-        here add code for requiring user settings for filters and notifications.
-        """
+        # Create table and dicts
+        mydb = mysql.connector.connect(host='localhost', user='root', passwd='flightplanner', database='FP_database')
+        mycursor = mydb.cursor()
 
-    # store an object information in table general_info
-    def setup_push_info(self):
-        mydb = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            passwd='flightplanner',
-            database='FP_database'
-        )
-        my_cursor = mydb.cursor()
-
-        # general_info columns: Username, track_id, table_name, trip_type, depart, dest
-        push_command = 'INSERT INTO general_info VALUES ("{0}", {1}, "{2}", "{3}","{4}","{5}",{6}, {7}, {8}, {9}, ' \
-                       '{10}, {11}, "{12}", "{13}", "{14}", "{15}", "{16}", "{17}", "{18}");' \
-            .format(self.username, self.track_id, self.table_name, self.flight_type, self.depart, self.dest,
-                    self.depart_date.split('/')[0], self.depart_date.split('/')[1], self.depart_date.split('/')[2],
-                    -1, -1, -1,
-                    self.filters.day_filter, self.filters.depart_time_filter, self.filters.max_duration_filter,
-                    self.filters.price_amount_filter, self.notifications.amount, self.notifications.diff,
-                    self.notifications.trend
-                    )
-        my_cursor.execute(push_command)
-
-        # setup a unique table for the flight, using table_name
-        # table_name columns: Depart, Dest, Date, min_econ, min_bus, avg_econ, avg_bus, track_date
-        set_up_command = 'CREATE TABLE {0} (Depart varchar(255), Dest varchar(255), Date varchar(255), ' \
-                         'min_econ int, min_bus int, avg_econ int, avg_bus int, track_date varchar(255));'.format \
-            (self.table_name)
-        my_cursor.execute(set_up_command)
+        set_up_command = 'CREATE TABLE {0} (Flight_id int, Date varchar(255), Min_eco int, Min_bus int, Avg_econ int,' \
+                         ' Avg_bus int, Track_date varchar(255));'.format(self.table_name)
+        mycursor.execute(set_up_command)
         mydb.commit()
-        my_cursor.close()
+        mycursor.close()
+
+        self.info_dict = dict()
 
     def apply_filters(self, flight_info):
         if self.filters.day_filter_switch():
@@ -202,7 +200,7 @@ class Flight_oneway:
         my_cursor.close()
 
 
-def reconstruct(track_id):
+def reconstruct(flight_id):
     mydb = mysql.connector.connect(
         host='localhost',
         user='root',
@@ -211,7 +209,7 @@ def reconstruct(track_id):
     )
     my_cursor = mydb.cursor()
 
-    find_flight_instance = 'SELECT * FROM general_info WHERE track_id="{0}"'.format(track_id)
+    find_flight_instance = 'SELECT * FROM general_info WHERE flight_id="{0}"'.format(flight_id)
     my_cursor.execute(find_flight_instance)
     flight_record = my_cursor.fetchone()
     my_cursor.close()
@@ -229,7 +227,7 @@ def reconstruct(track_id):
 
     flight_obj = Flight_oneway(flight_record[0], flight_record[4], flight_record[5],
                                str(flight_record[6]) + '/' + str(flight_record[7]) + '/' + str(flight_record[8]))
-    flight_obj.track_id = flight_record[1]
+    flight_obj.flight_id = flight_record[1]
     flight_obj.table_name = flight_record[2]
     flight_obj.filters = new_filters
     flight_obj.notifications = new_notification

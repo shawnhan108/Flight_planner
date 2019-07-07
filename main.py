@@ -33,17 +33,3 @@ import Flights
 # [['Ottawa', 'Vancouver', 'YUL'], ['14:55', '1 Stop - 9hr11m', '21:06'], ['366', '893']],
 # [['Ottawa', 'Vancouver', 'YYC'], ['07:25', '1 Stop - 9hr15m', '13:40'], ['NULL', '1468']],
 # [['Ottawa', 'Vancouver', 'YYZ'], ['06:00', '1 Stop - 9hr17m', '12:17'], ['371', '2291']]]
-
-mydb = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            passwd='flightplanner',
-            database='FP_database'
-        )
-my_cursor = mydb.cursor()
-# my_cursor.execute("UPDATE TEST SET content1 = '1000' WHERE mykey = 1;")
-# mydb.commit()
-
-
-flight = Flights.Notification()
-print(flight.diff)
