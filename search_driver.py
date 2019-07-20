@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait  # allow wait for a page to load
 
 
-class FlightSearch:
+class SearchDriver:
 
     def set_up(self, url):
         option = webdriver.ChromeOptions()
@@ -252,7 +252,7 @@ class FlightSearch:
 
     def extract_info_roundtrip(self, driver):
 
-        one_way_flights = FlightSearch.extract_info_oneway(self, driver)
+        one_way_flights = SearchDriver.extract_info_oneway(self, driver)
         time.sleep(5)
 
         next_xpath = '//*[@id="cabinBtnECO00"]'
@@ -299,27 +299,7 @@ class FlightSearch:
 
         # now extract the return flight info.
         time.sleep(5)
-        return_flights = FlightSearch.extract_info_oneway(self, driver)
+        return_flights = SearchDriver.extract_info_oneway(self, driver)
 
         return_list = [one_way_flights, return_flights]
         return return_list
-
-
-# depart and dest are strings, rest are integers. year = 4 digits, day/month 1 or 2 digits
-def retrieve_oneway(depart, dest, day, month, year):
-    p = FlightSearch()
-    driver = p.set_up("https://www.aircanada.com/ca/en/aco/home.html")
-    driver = p.oneway_search(driver, depart, dest, day, month, year)
-    result = p.extract_info_oneway(driver)
-    driver.quit()
-    return result
-
-
-def retrieve_roundtrip(depart, dest, depart_day, depart_month, depart_year, dest_day, dest_month, dest_year):
-    p = FlightSearch()
-    driver = p.set_up("https://www.aircanada.com/ca/en/aco/home.html")
-    driver = p.round_trip_search(driver, depart, dest, depart_day, depart_month, depart_year, dest_day, dest_month,
-                                 dest_year)
-    result = p.extract_info_roundtrip(driver)
-    driver.quit()
-    return result

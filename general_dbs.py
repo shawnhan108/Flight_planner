@@ -240,7 +240,7 @@ class FlightsDB:
         :param flight_type: flight type, 'economy', 'business', or 'both'
         :param depart: departure airport
         :param dest: destination airport
-        :param depart_date: departure date
+        :param depart_date: departure date, e.g. '08/23/2019' meaning August 23rd, 2019
         :param return_date: Optional: return date.
         :param day_filter: Day filter: excluded_days is in the form of a string e.g. 'Monday;Wednesday;Thursday'
         :param depart_time_filter: time_range in the form of military time, e.g. '11:30;14:30'
