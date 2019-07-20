@@ -2,6 +2,7 @@ from notifications import Notification
 
 
 class NotificationAnalysis(Notification):
+
     def check_notify(self, flight_info):
         """
         Takes a list of freshly scraped flights and check if the user should be notified.
@@ -10,17 +11,87 @@ class NotificationAnalysis(Notification):
         :param flight_info: a list of flights obtained from AirCanada.
         :return:
         """
-        if self.amount_notify():
-            # insert code here
-            pass
 
-        if self.diff_notify():
-            # insert code here
-            pass
+        """
+        alerts is what this method returns. 
+        Indices 0, 1, 2 contain True if amount, diff, trend notification needs to be sent,
+        respectively. Contain False otherwise.
+        Index 3 contains price bound broken (could be lower or upper bound), -1 if neither broken
+        Index 4 contains today's min price that broke the bound, -1 if neither bound broken
+        Index 5 contains last day's min price
+        Index 6 contains today's min price
+        Index 7 contains -1 if negative trend is detected, 0 if no trend and +1 if positive trend
+                self.trend contains relevant information that can be shown to the user
+        
+        """
+        alerts = [False, False, False, -1, -1, -1, -1, 0]
+
+        today_min = -1
+        for flight in flight_info:
+            if today_min == -1:
+                today_min = flight[2][0]
+            else:
+                today_min = min(today_min, flight[2][0])
+
+        if today_min == -1:
+            return alerts
+
+        if self.amount_notify():
+            if today_min < self.amount[0] or today_min > self.amount[1]:
+                alerts[0] = True
+                alerts[3] = self.amount[0]
+                alerts[4] = today_min
+
+        if self.diff_notify() and len(self.trend) > 0:
+            last_days_min = self.trend[len(self.trend) - 1]
+            if abs(today_min - last_days_min) >= self.diff:
+                alerts[1] = True
+                alerts[5] = last_days_min
+                alerts[6] = today_min
+
+        """
+        The trend is positive if there have been two increases in min price with no decreases
+        in between over the last at most 14 days.
+        
+        So the following show an increasing trend (= no change, - decrease, + increase):
+        1) = = = + +
+        2) = - + +
+        
+        And the following show no trend:
+        1) + - +
+        2) + [20 = signs] +
+        """
 
         if self.trend_notify():
-            # insert code here
-            pass
+            increased = False
+            decreased = False
+            trend_end = len(self.trend) - 1
+            trend_beginning = max(0, trend_end - 14)
+            i = trend_end
+
+            while i > trend_beginning:
+                if self.trend[i] > self.trend[i-1]:
+                    if decreased:
+                        break
+                    if increased:
+                        alerts[2] = True
+                        alerts[7] = 1
+                        break
+                    increased = True
+
+                if self.trend[i] < self.trend[i-1]:
+                    if increased:
+                        break
+                    if decreased:
+                        alerts[2] = True
+                        alerts[7] = -1
+                        break
+                    decreased = True
+
+                i -= 1
+
+        self.trend.append(today_min)
+        return alerts
 
     #  TODO: price algos. --> limits, differences, trends
 
@@ -59,9 +130,10 @@ class NotificationAnalysis(Notification):
     
     I don't think you will use these functions extensively, but you may want to access the notifications. Access them
     like this:
-    """
+    
 
     def example(self):
         amount_notification = self.amount
         differences_notification = self.diff
         trend_notification = self.trend
+    """
