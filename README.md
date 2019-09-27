@@ -13,4 +13,4 @@ Tools used:
 - Statistic algorithms for prices' trend insight.
 
 Remark:
-- Collaboration with Anubhav Maulik. 
+- Collaboration between Yushuo (Shawn) Han and Anubhav Maulik. 
